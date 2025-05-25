@@ -1,0 +1,48 @@
+name: Two-Step Deployment
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Ready for Deployment
+        run: |
+          echo "✅ Build completed successfully!"
+          echo "🚀 Ready for deployment"
+          echo "Go to Actions tab → 'Manual Deploy' → 'Run workflow' to deploy"
+
+---
+# Separate workflow file: .github/workflows/manual-deploy.yml
+name: Manual Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to take'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+        - deploy
+        - cancel
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'production'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: inputs.action == 'deploy'
+    steps:
+      - name: Deploy to ${{ inputs.environment }}
+        run: echo "Deploying to ${{ inputs.environment }}..."
+      
+  cancel:
+    runs-on: ubuntu-latest
+    if: inputs.action == 'cancel'
+    steps:
+      - name: Deployment Cancelled
+        run: echo "Deployment cancelled by user"
