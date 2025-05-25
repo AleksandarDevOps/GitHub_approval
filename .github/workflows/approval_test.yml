@@ -20,11 +20,16 @@ jobs:
           echo "📢 QA deployment finished"
           echo "🔔 Ready for staging approval"
 
-  request-staging-approval:
-    needs: deploy-qa
-    runs-on: ubuntu-latest
-    environment: stage  # This gives access to stage environment secrets
-    steps:
+      - name: Test Slack Connection
+        run: |
+          curl -X POST https://slack.com/api/chat.postMessage \
+          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+          "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+          "text": "Test message from GitHub Actions"
+          }'
+          
       - name: Send Slack Approval Request
         uses: khimananda/slack-approval@main
         env:
