@@ -1,25 +1,37 @@
-
-name: Simple Environment Approval
+name: Simple Deployment Test
 
 on:
-  workflow_dispatch: 
   push:
-    branches: main
+    branches: 
+      - 'release/*' 
+  workflow_dispatch: 
 
 jobs:
-  test-approval:
+  deploy-qa:
     runs-on: ubuntu-latest
-    environment: prod 
     steps:
-      - name: Step Before Approval
+      - name: Deploy to QA
         run: |
-          echo "✅ This runs immediately"
-          echo "⏳ Now waiting for approval..."
+          echo "🚀 Deploying to QA environment..."
+          echo "✅ QA deployment completed!"
       
+      - name: Notify QA Complete
+        run: |
+          echo "📢 QA deployment finished"
+          echo "🔔 Ready for staging approval"
 
-      
-      - name: Step After Approval
+
+  deploy-staging:
+    needs: deploy-qa
+    runs-on: ubuntu-latest
+    environment: stage 
+    steps:
+      - name: Deploy to Staging
         run: |
-          echo "🎉 APPROVED! Continuing..."
-          echo "✅ This only runs after manual approval"
-          echo "🏁 Workflow completed!"
+          echo "🎉 Deploying to STAGING environment..."
+          echo "✅ Staging deployment completed!"
+      
+      - name: Notify Staging Complete
+        run: |
+          echo "🎊 Staging deployment finished!"
+          echo "🌐 Application is live on staging!"
