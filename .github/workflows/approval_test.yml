@@ -1,20 +1,25 @@
-# .github/workflows/environment-approval.yml
-name: Environment Approval Test
+
+name: Simple Environment Approval
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
   push:
-    branches: [main]
+    branches: main
 
 jobs:
-  deploy:
+  test-approval:
     runs-on: ubuntu-latest
-    environment: production  # This references your environment
+    environment: prod 
     steps:
-      - name: Before Approval
-        run: echo "This step runs immediately"
-      
-      - name: Deploy (After Approval)
+      - name: Step Before Approval
         run: |
-          echo "🎉 Approved! Deploying now..."
+          echo "✅ This runs immediately"
+          echo "⏳ Now waiting for approval..."
+      
+
+      
+      - name: Step After Approval
+        run: |
+          echo "🎉 APPROVED! Continuing..."
           echo "✅ This only runs after manual approval"
+          echo "🏁 Workflow completed!"
