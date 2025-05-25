@@ -1,71 +1,30 @@
-name: Deploy with Issue Approval
+name: Deploy with Pause
 on:
   push:
     branches: [main]
 
 jobs:
-  request-approval:
+  build:
     runs-on: ubuntu-latest
-    outputs:
-      issue_number: ${{ steps.create-issue.outputs.issue_number }}
     steps:
-      - name: Create Approval Issue
-        id: create-issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issue = await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Deployment Approval Required - ${context.sha.substring(0,7)}`,
-              body: `
-                ## Deployment Request
-                - **Commit**: ${context.sha}
-                - **Branch**: ${context.ref}
-                
-                **To approve**: Comment "APPROVE"
-                **To reject**: Comment "REJECT"
-              `,
-              labels: ['deployment-approval']
-            });
-            return issue.data.number;
+      - name: Build
+        run: echo "Building..."
 
-  wait-for-approval:
-    needs: request-approval
+  request-approval:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for Approval
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issueNumber = ${{ needs.request-approval.outputs.issue_number }};
-            
-            while (true) {
-              const comments = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber
-              });
-              
-              const approvalComment = comments.data.find(comment => 
-                comment.body.includes('APPROVE') || comment.body.includes('REJECT')
-              );
-              
-              if (approvalComment) {
-                if (approvalComment.body.includes('APPROVE')) {
-                  console.log('Deployment approved!');
-                  break;
-                } else {
-                  throw new Error('Deployment rejected!');
-                }
-              }
-              
-              await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
-            }
+      - name: Request Manual Approval
+        run: |
+          echo "🔄 Deployment is ready!"
+          echo "⏳ Waiting for manual approval..."
+          echo "👉 Go to the next job and click 'Re-run' to approve"
+          exit 1  # This will pause the workflow
 
   deploy:
-    needs: [request-approval, wait-for-approval]
+    needs: request-approval
     runs-on: ubuntu-latest
+    if: always()  # Allows manual re-run even after failure
     steps:
       - name: Deploy
-        run: echo "Deploying after approval!"
+        run: echo "Deploying after manual approval!"
