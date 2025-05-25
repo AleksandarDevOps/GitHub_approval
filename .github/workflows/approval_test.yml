@@ -16,19 +16,15 @@ jobs:
           echo "🚀 Deploying to QA environment..."
           echo "✅ QA deployment completed!"
       
-      - name: Notify QA Complete
+      - name: Send QA Complete + Approval Request Notification
         run: |
-          echo "📢 QA deployment finished"
-          echo "🔔 Ready for staging approval"
-      
-      - name: Send Slack Approval Request notification
-        uses: khimananda/slack-approval@main
-        env:
-          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-        timeout-minutes: 10
+          curl -X POST https://slack.com/api/chat.postMessage \
+          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+          "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+          "text": "✅ *QA DEPLOYMENT COMPLETED*\n\n🔔 **APPROVAL REQUEST**: Staging deployment needs your approval\n\n📦 Repository: ${{ github.repository }}\n🌿 Branch: `${{ github.ref_name }}`\n\n🔗 **Approval URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\n⏳ Click the link above to approve staging deployment"
+          }'
 
   deploy-staging:
     needs: deploy-qa
