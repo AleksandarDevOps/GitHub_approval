@@ -1,184 +1,20 @@
-# .github/workflows/deploy-with-approval.yml
-name: Deploy with Manual Approval
+# .github/workflows/environment-approval.yml
+name: Environment Approval Test
 
 on:
-  push:
-    branches: [main, develop]
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
-  build-and-test:
+  deploy:
     runs-on: ubuntu-latest
+    environment: production  # This references your environment
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Before Approval
+        run: echo "This step runs immediately"
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install Dependencies
-        run: npm ci
-      
-      - name: Run Tests
-        run: npm test
-      
-      - name: Build Application
-        run: npm run build
-      
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: dist/
-
-  request-approval:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for Manual Approval
-        uses: trstringer/manual-approval@v1
-        timeout-minutes: 60  # Wait up to 1 hour for approval
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: your-github-username,teammate1,teammate2  # Replace with actual usernames
-          minimum-approvals: 1
-          issue-title: "🚀 Deployment Approval Required - ${{ github.ref_name }}"
-          issue-body: |
-            ## Deployment Request for `${{ github.ref_name }}` branch
-            
-            **Commit SHA**: `${{ github.sha }}`
-            **Author**: @${{ github.actor }}
-            **Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
-            ### What's being deployed:
-            - ✅ Tests passed
-            - ✅ Build completed successfully
-            - 📦 Ready for deployment
-            
-            ### Approval Instructions:
-            **To APPROVE**: Comment with `approved`, `approve`, `lgtm`, `yes`, or `deploy`
-            **To REJECT**: Comment with `denied`, `reject`, `no`, or `stop`
-            
-            ---
-            *This issue was automatically created and will be closed after approval/rejection.*
-          exclude-workflow-initiator-as-approver: false
-          additional-approved-words: 'lgtm,ship it,deploy,go ahead'
-          additional-denied-words: 'hold,wait,stop,cancel'
-
-  deploy-staging:
-    needs: request-approval
-    runs-on: ubuntu-latest
-    environment: staging  # Optional: if you have staging environment configured
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-          path: dist/
-      
-      - name: Deploy to Staging
+      - name: Deploy (After Approval)
         run: |
-          echo "🚀 Deploying to staging environment..."
-          echo "📁 Files ready in dist/ folder"
-          # Add your actual deployment commands here
-          # Example: rsync, scp, docker deploy, etc.
-          ls -la dist/
-          echo "✅ Staging deployment completed!"
-      
-      - name: Run Smoke Tests
-        run: |
-          echo "🧪 Running smoke tests on staging..."
-          # Add your smoke test commands here
-          # curl -f https://staging.yourapp.com/health || exit 1
-          echo "✅ Smoke tests passed!"
-
-  production-approval:
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Only for main branch
-    steps:
-      - name: Request Production Approval
-        uses: trstringer/manual-approval@v1
-        timeout-minutes: 30
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: senior-dev,team-lead  # Replace with senior team members
-          minimum-approvals: 1
-          issue-title: "🔥 PRODUCTION Deployment - Final Approval Required"
-          issue-body: |
-            ## 🚨 PRODUCTION DEPLOYMENT REQUEST
-            
-            **Branch**: `main`
-            **Commit**: `${{ github.sha }}`
-            **Staging**: ✅ Deployed and tested successfully
-            
-            ### Pre-deployment Checklist:
-            - [x] Tests passed
-            - [x] Build successful
-            - [x] Staging deployment verified
-            - [x] Smoke tests completed
-            
-            ### Production Deployment Details:
-            - **Environment**: Production
-            - **Downtime Expected**: ~2 minutes
-            - **Rollback Plan**: Available
-            
-            **⚠️ This will deploy to PRODUCTION environment**
-            
-            **To APPROVE**: Comment `approved` or `deploy to production`
-            **To REJECT**: Comment `denied` or `hold`
-
-  deploy-production:
-    needs: production-approval
-    runs-on: ubuntu-latest
-    environment: production  # Optional: if you have production environment configured
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-          path: dist/
-      
-      - name: Deploy to Production
-        run: |
-          echo "🎉 Deploying to PRODUCTION environment..."
-          echo "📁 Deploying files from dist/ folder"
-          # Add your actual production deployment commands here
-          ls -la dist/
-          echo "✅ Production deployment completed!"
-      
-      - name: Verify Production Deployment
-        run: |
-          echo "🔍 Verifying production deployment..."
-          # Add verification commands here
-          # curl -f https://yourapp.com/health || exit 1
-          echo "✅ Production verification completed!"
-      
-      - name: Notify Team
-        run: |
-          echo "📢 Deployment completed successfully!"
-          echo "🌐 Application is live at: https://yourapp.com"
-          echo "📊 Monitor at: https://monitoring.yourapp.com"
-
-  cleanup:
-    needs: [deploy-staging, deploy-production]
-    runs-on: ubuntu-latest
-    if: always()  # Run even if some jobs fail
-    steps:
-      - name: Cleanup Artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            console.log('🧹 Cleaning up workflow artifacts...');
-            // Optional: Add cleanup logic here
-            console.log('✅ Cleanup completed!');
+          echo "🎉 Approved! Deploying now..."
+          echo "✅ This only runs after manual approval"
