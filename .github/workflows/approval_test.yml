@@ -1,106 +1,22 @@
-name: Deploy with Manual Approval
-
+name: main
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Build Application
-        run: |
-          echo "Building application..."
-          # Add your build steps here
-          
-      - name: Run Tests
-        run: |
-          echo "Running tests..."
-          # Add your test steps here
-
-  manual-approval:
+      - name: Build
+        run: echo building
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
     needs: build
-    runs-on: ubuntu-latest
     steps:
-      - name: Request Manual Approval
-        uses: trstringer/manual-approval@v1
-        timeout-minutes: 60
+      - uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.TOKEN }}
-          approvers: your-github-username,teammate1,teammate2
-          minimum-approvals: 1
-          issue-title: "🚀 Production Deployment Approval Required"
-          issue-body: |
-            ## Deployment Request
-            
-            **Branch**: `${{ github.ref_name }}`
-            **Commit**: `${{ github.sha }}`
-            **Author**: @${{ github.actor }}
-            **Workflow**: ${{ github.workflow }}
-            **Run ID**: ${{ github.run_id }}
-            
-            ### Changes
-            Please review the changes and approve or deny this deployment.
-            
-            **View Changes**: [Compare](${{ github.server_url }}/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }})
-            **View Workflow**: [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
-            ---
-            
-            **To approve**: Comment `approved`, `approve`, `lgtm`, or `yes`
-            **To deny**: Comment `denied`, `deny`, `no`, or any other text
-            
-          exclude-workflow-initiator-as-approver: false
-          additional-approved-words: 'lgtm,ship it,deploy'
-          additional-denied-words: 'hold,wait,stop'
-
-  deploy-staging:
-    needs: manual-approval
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Staging
-        run: |
-          echo "🚀 Deploying to staging environment..."
-          # Add your staging deployment commands here
-          
-  production-approval:
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    steps:
-      - name: Request Production Approval
-        uses: trstringer/manual-approval@v1
-        timeout-minutes: 30
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: senior-dev,team-lead
-          minimum-approvals: 1
-          issue-title: "🔥 PRODUCTION Deployment - Final Approval"
-          issue-body: |
-            ## 🚨 PRODUCTION DEPLOYMENT
-            
-            Staging deployment completed successfully.
-            
-            **Ready for PRODUCTION deployment**
-            
-            Please verify staging and approve production deployment.
-            
-            **Staging URL**: https://staging.yourapp.com
-            **View Logs**: [Staging Deployment](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-  deploy-production:
-    needs: production-approval
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Production
-        run: |
-          echo "🎉 Deploying to production environment..."
-          # Add your production deployment commands here
-          
-      - name: Notify Success
-        run: |
-          echo "✅ Production deployment completed successfully!"
-          echo "🌐 Application is live at: https://yourapp.com"
+          approvers: trstringer,acdunnigan
+      - name: Deploy to production
+        run: echo deploying
