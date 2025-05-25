@@ -9,7 +9,6 @@ on:
 jobs:
   deploy-qa:
     runs-on: ubuntu-latest
-    environment: stage  # Added to access your Slack secrets
     steps:
       - name: Deploy to QA
         run: |
