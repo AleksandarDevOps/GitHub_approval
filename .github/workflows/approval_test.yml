@@ -40,7 +40,7 @@ jobs:
         timeout-minutes: 10
 
   deploy-staging:
-    needs: [deploy-qa, request-staging-approval]
+    needs: deploy-qa
     runs-on: ubuntu-latest
     environment: stage 
     steps:
